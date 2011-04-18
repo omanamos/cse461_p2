@@ -10,78 +10,75 @@ import java.util.*;
 import java.io.*;
 
 public class RFIDTag {
-	private static Random generator = new Random();
+    private static Random generator = new Random();
 
-	//64 bit tag identifier
-	private byte[] tagEPC;
+    //64 bit tag identifier
+    private byte[] tagEPC;
 
-	//Insert other needed state here
-	private boolean beenInventoried;
-	private boolean sentEPC;
+    //Insert other needed state here
+    private boolean beenInventoried;
+    private boolean sentEPC;
 
-	public RFIDTag() {
-		//generate random unsigned 64 bit identifier for this Tag
-		tagEPC = new byte[8];
-		generator.nextBytes(tagEPC);
+    public RFIDTag() {
+        //generate random unsigned 64 bit identifier for this Tag
+        tagEPC = new byte[8];
+        generator.nextBytes(tagEPC);
 
-		beenInventoried = false;
-		sentEPC = false;
-	}
+        beenInventoried = false;
+        sentEPC = false;
+    }
 
-	/*
-		"magic" method used by the simulator to directly
-	   access the EPC of the given tag.  Your reader can't do
-	   magic, (or see the tags directly), so you should not
-	   use this method.
-	*/
-	public byte[] getEPC() {
-		return tagEPC;
-	}
+    /*
+       "magic" method used by the simulator to directly
+       access the EPC of the given tag.  Your reader can't do
+       magic, (or see the tags directly), so you should not
+       use this method.
+    */
+    public byte[] getEPC() {
+        return tagEPC;
+    }
 
+    /*
+      responds to an incoming message, encoded as a byte array.
+      return null if the tag does not reply to the message.
+    */
+    public byte[] respond(byte[] message) {
+        /*
+            Currently, the strawman protocol is implemented.
+            Replace with your own protocol.
+        */
+        assert(message != null);
 
-	/*
-	  responds to an incoming message, encoded as a byte array.
-     Return null if the tag does not reply to the message.
-	*/
-	public byte[] respond(byte[] message) {
-		/*
-			Currently, the strawman protocol is implemented.
-			Replace with your own protocol.
-		*/
+        if(Arrays.equals(message, RFIDChannel.GARBLE)){
+            //do nothing (and don't check message further)
+        } else {
+            //unpack the message
+            //see comment in RFIDReader concerning use of Streams
+            ByteArrayInputStream bytesIn = new ByteArrayInputStream(message);
+            DataInputStream dataIn = new DataInputStream(bytesIn);
 
-		assert(message != null);
+            byte flag = 0;
+            try {
+                flag = dataIn.readByte();
+            } catch (Exception e) {
+                System.out.println("Error during read in Tag");
+            }
 
-		if(Arrays.equals(message, RFIDChannel.GARBLE)){
-			//do nothing (and don't check message further)
-		} else {
-			//unpack the message
-			//see comment in RFIDReader concerning use of Streams
-			ByteArrayInputStream bytesIn = new ByteArrayInputStream(message);
-			DataInputStream dataIn = new DataInputStream(bytesIn);
+            if(flag == RFIDConstants.ACK && sentEPC){
+                //we've been inventoried, don't respond anymore.
+                beenInventoried = true;
+            } else if(flag == RFIDConstants.QUERY && !beenInventoried){
+                //this is a query, roll the die to see if we reply
+                if(generator.nextInt(32) == 0){
+                    //success, send out our EPC to be inventoried
+                    sentEPC = true;
+                    return tagEPC;
+                }
+            }
+        }
 
-			byte flag = 0;
-			try {
-				flag = dataIn.readByte();
-			} catch (Exception e) {
-				System.out.println("Error during read in Tag");
-			}
-
-			if(flag == RFIDConstants.ACK && sentEPC){
-				//we've been inventoried, don't respond anymore.
-				beenInventoried = true;
-			} else if(flag == RFIDConstants.QUERY && !beenInventoried){
-				//this is a query, roll the die to see if we reply
-				if(generator.nextInt(32) == 0){
-					//success, send out our EPC to be inventoried
-					sentEPC = true;
-					return tagEPC;
-				}
-			}
-		}
-
-		//if we reach here, we didn't respond with tag.  Return null (no reply).
-		sentEPC = false;
-		return null;
-	}
-
+        //if we reach here, we didn't respond with tag.  Return null (no reply).
+        sentEPC = false;
+        return null;
+    }
 }

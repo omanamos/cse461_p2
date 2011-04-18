@@ -6,8 +6,7 @@
 
 public class RFIDConstants {
 
-	//Add or change frame components as needed
-        public static final byte ACK = 'a';
-	public static final byte QUERY = 'q';
-
+    //Add or change frame components as needed
+    public static final byte ACK = 'a';
+    public static final byte QUERY = 'q';
 }
