@@ -51,13 +51,56 @@ public class RFIDReader {
             System.out.println("Error in creation of reader frames!");
         }
     }
+    
+    public List<byte[]> inventory() {
+        int count = 0; //count of consecutive no-replies
+        int window = 0;
+        byte[] response;
 
+        while(count < 32) {
+            response = sendQuery();
+
+            if(response == null){
+            	count++;
+            	boolean broadcast = window != 0;
+            	window = Math.max(window / 2 - 1, 0);	//Not sure what exactly to decrease window by
+            	if(broadcast)
+            		this.sendWindow(window);
+            } else if(Arrays.equals(response, RFIDChannel.GARBLE)){
+                count = 0;
+                window = Math.min(window + 1, 255);		//Not sure what exactly to increase window by
+                this.sendWindow(window);
+            } else {
+                if(!currentInventory.contains(response)){
+                    currentInventory.add(response);
+                }
+                sendAck();
+                count = 0;
+
+            }
+        }
+
+        return currentInventory;
+    }
+    
+    private void sendAck(){
+    	channel.sendMessage(ack);
+    }
+    
+    private byte[] sendQuery(){
+    	return channel.sendMessage(query);
+    }
+    
+    private void sendWindow(int window){
+    	channel.sendMessage(new byte[]{RFIDConstants.WINDOW, new RFIDWindow(window).getWindow()});
+    }
+    
     //This controls the behavoir of the Reader.
     //The inventory method should run
     //until the reader determines that it is unlikly
     //any other tags are uninventored, then return
     //the currentInventory.
-    public List<byte[]> inventory() {
+    public List<byte[]> strawManInventory() {
         /*
             Currently, the strawman protocol is implemented.
             Replace with your own protocol.
@@ -86,21 +129,6 @@ public class RFIDReader {
         }
 
         return currentInventory;
-    }
-    
-    private void sendAck(){
-    	channel.sendMessage(ack);
-    }
-    
-    private byte[] sendQuery(){
-    	return channel.sendMessage(query);
-    }
-    
-    private void sendWindow(int window){
-    	ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-        DataOutputStream dataOut = new DataOutputStream(bytesOut);
-        
-    	channel.sendMessage(bytesOut.toByteArray());
     }
 }
 
