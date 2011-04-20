@@ -74,6 +74,8 @@ public class RFIDTag {
                     sentEPC = true;
                     return tagEPC;
                 }
+            }else if(flag == RFIDConstants.WINDOW && !beenInventoried){
+            	
             }
         }
 

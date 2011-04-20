@@ -69,7 +69,7 @@ public class RFIDReader {
         //Strawman protocol continues until
         //32 consecutive no-replies.
         while(count < 32) {
-            response = channel.sendMessage(query);
+            response = sendQuery();
 
             if(response == null){
                 count++;
@@ -79,13 +79,28 @@ public class RFIDReader {
                 if(!currentInventory.contains(response)){
                     currentInventory.add(response);
                 }
-                channel.sendMessage(ack);
+                sendAck();
                 count = 0;
 
             }
         }
 
         return currentInventory;
+    }
+    
+    private void sendAck(){
+    	channel.sendMessage(ack);
+    }
+    
+    private byte[] sendQuery(){
+    	return channel.sendMessage(query);
+    }
+    
+    private void sendWindow(int window){
+    	ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+        DataOutputStream dataOut = new DataOutputStream(bytesOut);
+        
+    	channel.sendMessage(bytesOut.toByteArray());
     }
 }
 
