@@ -1,7 +1,7 @@
 
 public class RFIDWindow {
 	
-	public final int window;
+	private final int window;
 	
 	/**
 	 * @param window should be less than 256
@@ -16,8 +16,15 @@ public class RFIDWindow {
 	/**
 	 * @return byte representation of this window
 	 */
-	public byte getWindow(){
+	public byte toByte(){
 		return (byte)this.window;
+	}
+	
+	/**
+	 * @return the window size
+	 */
+	public int getWindow(){
+	    return this.window;
 	}
 	
 	/**
@@ -40,9 +47,9 @@ public class RFIDWindow {
 	public static void main(String[] args){
 		for(int i = 0; i < 256; i++){
 			RFIDWindow w = new RFIDWindow(i);
-			w = RFIDWindow.unpack(w.getWindow());
+			w = RFIDWindow.unpack(w.toByte());
 			if(w.window != i)
-				System.out.println("Error: Expected: " + i + " Got: " + w.window);
+				System.err.println("Error: Expected: " + i + " Got: " + w.window);
 		}
 		System.out.println("Finished!");
 	}

@@ -10,6 +10,7 @@ import java.util.*;
 import java.io.*;
 
 public class RFIDTag {
+    private static final int INITIAL_WINDOW = 32;
     private static Random generator = new Random();
 
     //64 bit tag identifier
@@ -17,7 +18,9 @@ public class RFIDTag {
 
     //Insert other needed state here
     private boolean beenInventoried;
-    private boolean sentEPC;
+    private boolean previouslySentEPC;
+
+    private RFIDWindow window;
 
     public RFIDTag() {
         //generate random unsigned 64 bit identifier for this Tag
@@ -25,7 +28,8 @@ public class RFIDTag {
         generator.nextBytes(tagEPC);
 
         beenInventoried = false;
-        sentEPC = false;
+        previouslySentEPC = false;
+        window = new RFIDWindow(INITIAL_WINDOW);
     }
 
     /*
@@ -43,15 +47,10 @@ public class RFIDTag {
       return null if the tag does not reply to the message.
     */
     public byte[] respond(byte[] message) {
-        /*
-            Currently, the strawman protocol is implemented.
-            Replace with your own protocol.
-        */
-        assert(message != null);
+        if(message == null)
+            throw new AssertionError("Message should not be null!");
 
-        if(Arrays.equals(message, RFIDChannel.GARBLE)){
-            //do nothing (and don't check message further)
-        } else {
+        if(!Arrays.equals(message, RFIDChannel.GARBLE)){
             //unpack the message
             //see comment in RFIDReader concerning use of Streams
             ByteArrayInputStream bytesIn = new ByteArrayInputStream(message);
@@ -61,26 +60,39 @@ public class RFIDTag {
             try {
                 flag = dataIn.readByte();
             } catch (Exception e) {
-                System.out.println("Error during read in Tag");
+                System.err.println("Error during read in Tag");
+                return null;
             }
 
-            if(flag == RFIDConstants.ACK && sentEPC){
-                //we've been inventoried, don't respond anymore.
-                beenInventoried = true;
+            if(flag == RFIDConstants.ACK){
+                // someone was inventoried, so we know that we have one less
+                // tag to contend with
+                window = new RFIDWindow(Math.max(window.getWindow() - 1, 0));
+                
+                if(previouslySentEPC) {
+                    //we've been inventoried, so don't respond anymore.
+                    beenInventoried = true;
+                }
             } else if(flag == RFIDConstants.QUERY && !beenInventoried){
-                //this is a query, roll the die to see if we reply
-                if(generator.nextInt(32) == 0){
+               //this is a query, update our window..
+                try {
+                    window = RFIDWindow.unpack(dataIn.readByte());
+                } catch (Exception e) {
+                    System.err.println("Error during read in Tag");
+                    return null;
+                }
+                
+                // and roll the die to see if we reply
+                if(window.getWindow() == 0 || generator.nextInt(window.getWindow()) == 0){
                     //success, send out our EPC to be inventoried
-                    sentEPC = true;
+                    previouslySentEPC = true;
                     return tagEPC;
                 }
-            }else if(flag == RFIDConstants.WINDOW && !beenInventoried){
-            	
             }
         }
 
         //if we reach here, we didn't respond with tag.  Return null (no reply).
-        sentEPC = false;
+        previouslySentEPC = false;
         return null;
     }
 }
