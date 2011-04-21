@@ -78,8 +78,9 @@ public class RFIDTag {
                 try {
                     window = RFIDWindow.unpack(dataIn.readByte());
                 } catch (Exception e) {
-                    System.err.println("Error during read in Tag");
-                    return null;
+                    //System.err.println("Error during read in Tag");
+                    //return null;
+					//XXX If the window hasn't changes, no need to send it again, so I just send the query flag, so just use the old window.
                 }
                 
                 // and roll the die to see if we reply

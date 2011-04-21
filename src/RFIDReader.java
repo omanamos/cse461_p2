@@ -13,6 +13,8 @@ import java.io.*;
 
 public class RFIDReader {
 
+	private static final int INITIAL_WINDOW = 0;
+
     private List<byte[]> currentInventory;
     private RFIDChannel channel;
 
@@ -56,29 +58,30 @@ public class RFIDReader {
         int count = 0; //count of consecutive no-replies
         int window = 0;
         byte[] response;
+		boolean windowChange = true;
 
-        while(count < 32) {
-            response = sendQuery();
-
+        while(count < 32) { //XXX adjust stopping criteria
+			//only send the window along with query if it changed during the last iteration
+			if(windowChange)
+				response = sendQuery(window);
+			else
+				response = sendQuery();
+			
             if(response == null){
             	count++;
-            	boolean broadcast = window != 0;
-            	window = Math.max(window / 2 - 1, 0);	//XXX Not sure what exactly to decrease window by
-            	if(broadcast)
-            		this.sendWindow(window);
+                window = Math.max(window / 2 - 1, 0);	//XXX Not sure what exactly to decrease window by
+				windowChange = window != 0;
             } else if(Arrays.equals(response, RFIDChannel.GARBLE)){
                 count = 0;
                 window = Math.min(window + 1, 255);		//XXX Not sure what exactly to increase window by
-                // XXX if we send the window size as the payload of the next query packet, we could save ourselves
-                //     a byte for the header. Then when a tag receives a query packet, it
-                //     will /first/ update its window, and then decide whether to reply
-                this.sendWindow(window); 
-            } else {
+                windowChange = true;
+            } else {//I don't think ACKs need to to be implicit decreases, because windows get updated on every query that the window changes.
                 if(!currentInventory.contains(response)){
                     currentInventory.add(response);
                 }
-                sendAck(); // ACKS are implicit window decreases. By how much? Or, do we really need ACKs to be implicit window decreases?
+                sendAck();
                 count = 0;
+				windowChange = false;
             }
         }
 
@@ -89,8 +92,12 @@ public class RFIDReader {
     	channel.sendMessage(ack);
     }
     
-    private byte[] sendQuery(){
-    	return channel.sendMessage(query);
+	private byte[] sendQuery(){
+		return channel.sendMessage(query);
+	}
+
+    private byte[] sendQuery(int window){
+    	return channel.sendMessage(new byte[]{query[0], new RFIDWindow(window).toByte()});
     }
     
     private void sendWindow(int window){
