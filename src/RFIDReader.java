@@ -12,7 +12,7 @@ import java.util.*;
 import java.io.*;
 
 public class RFIDReader {
-
+    private static final int STOPPING_CRITERIA = 4;
 	private static final int INITIAL_WINDOW = 0;
 
     private List<byte[]> currentInventory;
@@ -60,7 +60,7 @@ public class RFIDReader {
         byte[] response;
 		boolean windowChange = true;
 
-        while(count < 32) { //XXX adjust stopping criteria
+        while(count < STOPPING_CRITERIA) { //XXX adjust stopping criteria
 			//only send the window along with query if it changed during the last iteration
 			if(windowChange)
 				response = sendQuery(window);
