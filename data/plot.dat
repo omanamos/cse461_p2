@@ -1,0 +1,13 @@
+/usr/lib/ruby/1.9.1/mathn.rb:46: warning: method redefined; discarding old **
+/usr/lib/ruby/1.9.1/mathn.rb:57: warning: method redefined; discarding old **
+/usr/lib/ruby/1.9.1/mathn.rb:191: warning: method redefined; discarding old sqrt
+7 0.735761978922956
+12 0.829128049036523
+19 0.876396178132685
+20 0.900876839831122
+25 0.918498166548626
+28 0.93616964659624
+30 0.942652910465267
+36 0.951658114120494
+37 0.954336820450729
+40 0.958147770064673
