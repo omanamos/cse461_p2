@@ -66,8 +66,8 @@ public class RFIDTag {
 
             if(flag == RFIDConstants.ACK){
                 // someone was inventoried, so we know that we have one less
-                // tag to contend with
-                window = new RFIDWindow(Math.max(window.getWindow() - 1, 0));
+                // tag to contend with XXX
+                //window = new RFIDWindow(Math.max(window.getWindow() - 1, 0));
                 
                 if(previouslySentEPC) {
                     //we've been inventoried, so don't respond anymore.
@@ -78,12 +78,12 @@ public class RFIDTag {
                 try {
                     window = RFIDWindow.unpack(dataIn.readByte());
                 } catch (Exception e) {
-                    //System.err.println("Error during read in Tag");
-                    //return null;
-					//XXX If the window hasn't changes, no need to send it again, so I just send the query flag, so just use the old window.
+					//If the window hasn't changed, no need to send it again. 
+                    //The reader just sends the query flag, and we keep the
+                    //old window.
                 }
                 
-                // and roll the die to see if we reply
+                //and roll the die to see if we reply
                 if(window.getWindow() == 0 || generator.nextInt(window.getWindow()) == 0){
                     //success, send out our EPC to be inventoried
                     previouslySentEPC = true;
