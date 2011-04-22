@@ -60,22 +60,21 @@ public class RFIDReader {
         byte[] response;
 		boolean windowChange = true;
 
-        while(count < STOPPING_CRITERIA) { //XXX adjust stopping criteria
-			//only send the window along with query if it changed during the last iteration
+        while(count < STOPPING_CRITERIA) {
 			if(windowChange)
 				response = sendQuery(window);
 			else
 				response = sendQuery();
 			
             if(response == null){
-            	count++;
-                window = Math.max(window / 2 - 1, 0);	//XXX Not sure what exactly to decrease window by
+            	count += window == 0 ? 0 : 1;
+                window = Math.max(window / 2 - 1, 0);
 				windowChange = window != 0;
             } else if(Arrays.equals(response, RFIDChannel.GARBLE)){
                 count = 0;
-                window = Math.min(window + 1, 255);		//XXX Not sure what exactly to increase window by
+                window = Math.min(window + 1, 255);
                 windowChange = true;
-            } else {//I don't think ACKs need to to be implicit decreases, because windows get updated on every query that the window changes.
+            } else {
                 if(!currentInventory.contains(response)){
                     currentInventory.add(response);
                 }
