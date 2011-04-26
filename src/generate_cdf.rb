@@ -1,6 +1,6 @@
-#!/usr/bin/ruby1.9 -w
+#!/usr/bin/ruby -w
 
-system "javac *java"
+#system "javac *java"
 
 def parse_stdout(output)
     #
@@ -25,8 +25,9 @@ file_prefix = ARGV.shift
 bytes_output = File.open("#{file_prefix}_bytes.dat", "w")
 missed_output = File.open("#{file_prefix}_missed.dat", "w")
 
-1.upto(256) do |num_tags|
-   $stderr.print "."
+1.upto(256/4) do |num_tags|
+   num_tags *= 4
+   $stderr.puts num_tags if (num_tags % 20) == 0
    stdout = `java RFIDSim 10 #{num_tags} 5`.split("\n")
    found, missed, runtime, bytes, max_found, max_missed, max_runtime, min_runtime, max_byte_run, min_byte_run = parse_stdout(stdout)
    bytes_output.puts "#{num_tags} #{bytes}"

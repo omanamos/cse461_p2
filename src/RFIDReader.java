@@ -13,7 +13,7 @@ import java.io.*;
 
 public class RFIDReader {
     private static final int STOPPING_CRITERIA = 4;
-	private static final int INITIAL_WINDOW = 0;
+	private static final int INITIAL_WINDOW = 30;
 
     private List<byte[]> currentInventory;
     private RFIDChannel channel;
@@ -56,18 +56,19 @@ public class RFIDReader {
     
     public List<byte[]> inventory() {
         int count = 0; //count of consecutive no-replies
-        int window = 0;
+        int window = INITIAL_WINDOW;
         byte[] response;
 		boolean windowChange = true;
 
         while(count < STOPPING_CRITERIA) {
+            System.err.println("count: " + count);
 			if(windowChange)
 				response = sendQuery(window);
 			else
 				response = sendQuery();
 			
             if(response == null){
-            	count += window == 0 ? 0 : 1;
+            	count += window == 0 ? 1 : 0;
                 window = Math.max(window / 2 - 1, 0);
 				windowChange = window != 0;
             } else if(Arrays.equals(response, RFIDChannel.GARBLE)){
