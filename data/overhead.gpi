@@ -7,4 +7,5 @@ set xlabel "Number of tags" 0,0.35
 set ylabel "(tags*8) / total bytes sent" 1.1,0
 set output "mac_overhead.eps"
 
-plot "implicit_windows_mac.dat" using 1:2 t "implicit windows" with lines lw 8
+plot "implicit_windows_mac.dat" using 1:2 t "implicit windows" with lines lw 8,\
+"strawman_mac.dat" using 1:2 t "strawman" with lines lw 8
