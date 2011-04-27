@@ -51,8 +51,11 @@ public class RFIDReader {
                     window = Math.min(window * 2 + 1, 255);
 		            nextFlag = RFIDConstants.COLLISION_QUERY;
                 } else {
-                    if(!currentInventory.contains(response))
+                    String epcValue = new String(response);
+                    if(!epcValues.contains(epcValue)) {
+                        epcValues.add(epcValue);
                         currentInventory.add(response);
+                    }
                     count = 0;
 	            	windowChange = window != 0;
 	            	window = Math.max(window - 1, 0);
@@ -60,7 +63,8 @@ public class RFIDReader {
                 }
             }
 
-            return currentInventory;
+        }
+        return currentInventory;
     }
     
     private byte[] sendQuery(byte code){
