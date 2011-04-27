@@ -109,9 +109,9 @@ public class RFIDSim {
 								 " tags per trial, " + errorRate + "% channel error rate:");
 		System.out.println("---------------------------------------------------------");
 		if(dupTags){
-			System.out.println();
-			System.out.println("WARNING: duplicate tag EPC's returned by reader!");
-			System.out.println();
+			System.err.println();
+			System.err.println("WARNING: duplicate tag EPC's returned by reader!");
+			System.err.println();
 		}
 		System.out.println("Average tags found:  " + (double)sumTagsFound / numTrials);
 		System.out.println("Average tags missed: " + (double)sumTagsMissed / numTrials);

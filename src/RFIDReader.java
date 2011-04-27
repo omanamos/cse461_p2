@@ -16,6 +16,7 @@ public class RFIDReader {
 	private static final int INITIAL_WINDOW = 30;
 
     private List<byte[]> currentInventory;
+    private Set<String> epcValues; // List.contains() uses ==, not .equals...
     private RFIDChannel channel;
 
     //frames used for the protocol
@@ -24,6 +25,7 @@ public class RFIDReader {
 
     public RFIDReader(RFIDChannel chan) {
         currentInventory = new ArrayList<byte[]>();
+        epcValues = new HashSet<String>();
         channel = chan;
 
         //Create needed output frames that don't change.
@@ -61,7 +63,6 @@ public class RFIDReader {
 		boolean windowChange = true;
 
         while(count < STOPPING_CRITERIA) {
-            System.err.println("count: " + count);
 			if(windowChange)
 				response = sendQuery(window);
 			else
@@ -76,9 +77,12 @@ public class RFIDReader {
                 window = Math.min(window + 1, 255);
                 windowChange = true;
             } else {
-                if(!currentInventory.contains(response)){
+                String epc = new String(response);
+                if(!epcValues.contains(epc)) {
+                    epcValues.add(epc);
                     currentInventory.add(response);
                 }
+
                 sendAck();
                 count = 0;
 				windowChange = false;
@@ -130,14 +134,12 @@ public class RFIDReader {
             } else {
                 if(!currentInventory.contains(response)){
                     currentInventory.add(response);
-                }
+                }               
                 sendAck();
                 count = 0;
-
             }
         }
 
         return currentInventory;
     }
 }
-
