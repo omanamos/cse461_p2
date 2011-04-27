@@ -12,9 +12,9 @@ import java.util.*;
 import java.io.*;
 
 public class RFIDReader {
-    private static final int STOPPING_CRITERIA = 4;
+    private static final int STOPPING_CRITERIA = 10;
     private static final int INITIAL_WINDOW = 30;
-    private static final int WINDOW_TRANS_SPACING = 10;
+    private static final int WINDOW_TRANS_SPACING = 50;
 
     private List<byte[]> currentInventory;
     private Set<String> epcValues; // List.contains() uses ==, not .equals...
@@ -30,40 +30,44 @@ public class RFIDReader {
         int count = 0; //count of consecutive no-replies
         int window = INITIAL_WINDOW;
         byte[] response;
-	    boolean windowChange = true;
-	    int timeSinceLastWindowPacket = 0;
-	    byte nextFlag = RFIDConstants.NEW_QUERY;
+    	boolean windowChange = true;
+    	int timeSinceLastWindowPacket = 0;
+    	byte nextFlag = RFIDConstants.NEW_QUERY;
 
         while(count < STOPPING_CRITERIA) {
-	        if(windowChange && timeSinceLastWindowPacket > WINDOW_TRANS_SPACING)
+	        if(windowChange && timeSinceLastWindowPacket > WINDOW_TRANS_SPACING){
+		        //send out window size along with packet
 		        response = sendQuery(nextFlag, window);
-	        else {
-	        	response = sendQuery(nextFlag);
-	        
-                if(response == null){
-                	count += window == 0 ? 1 : 0;
-		            windowChange = window != 0;
-                    window = Math.max(window / 2 - 1, 0);
-		            nextFlag = RFIDConstants.DESPERATE_QUERY;
-                } else if(Arrays.equals(response, RFIDChannel.GARBLE)){
-                    count = 0;
-	            	windowChange = window != 255;
-                    window = Math.min(window * 2 + 1, 255);
-		            nextFlag = RFIDConstants.COLLISION_QUERY;
-                } else {
-                    String epcValue = new String(response);
-                    if(!epcValues.contains(epcValue)) {
-                        epcValues.add(epcValue);
-                        currentInventory.add(response);
-                    }
-                    count = 0;
-	            	windowChange = window != 0;
-	            	window = Math.max(window - 1, 0);
-	            	nextFlag = RFIDConstants.NEW_QUERY;
-                }
-            }
+		        timeSinceLastWindowPacket = 0;
+	        }else {
+		        //send out query
+		        response = sendQuery(nextFlag);
+		        timeSinceLastWindowPacket++;
+	        }
 
-        }
+	        if(response == null){
+	            count += window == 0 ? 1 : 0;
+	            windowChange = window != 0;
+	            window = Math.max(window / 2 - 1, 0);
+	            nextFlag = RFIDConstants.DESPERATE_QUERY;
+	        } else if(Arrays.equals(response, RFIDChannel.GARBLE)){
+	            count = 0;
+	            windowChange = window != 255;
+	            window = Math.min(window * 2 + 1, 255);
+	            nextFlag = RFIDConstants.COLLISION_QUERY;
+	        } else {
+	            String epcValue = new String(response);
+	            if(!epcValues.contains(epcValue)) {
+	                epcValues.add(epcValue);
+	                currentInventory.add(response);
+	            }
+	            count = 0;
+	            windowChange = window != 0;
+	            window = Math.max(window - 1, 0);
+	            nextFlag = RFIDConstants.NEW_QUERY;
+	        }
+	}
+	
         return currentInventory;
     }
     

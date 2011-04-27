@@ -1,6 +1,6 @@
 #!/usr/bin/ruby -w
 
-system "javac *java"
+#system "javac *java"
 
 def parse_stdout(output)
     #
@@ -17,26 +17,25 @@ def parse_stdout(output)
     #Max bytes single run: 260
     #Min bytes single run: 125
     
-    begin
     output[3..-1].map { |line| line.split(':')[1].strip.split(' ')[0] }
-    rescue Exception
-        puts output
-    end
 end
 
 file_prefix = ARGV.shift
 
 bytes_output = File.open("#{file_prefix}_bytes.dat", "w")
 missed_output = File.open("#{file_prefix}_missed.dat", "w")
+epc_overhead_output = File.open("#{file_prefix}_mac.dat", "w")
 
-1.upto(256/4) do |num_tags|
-   num_tags *= 4
-   $stderr.print "."
+1.upto(256/8) do |num_tags|
+   num_tags *= 8
+   $stderr.puts num_tags if (num_tags % 20) == 0
    stdout = `java RFIDSim 10 #{num_tags} 5`.split("\n")
    found, missed, runtime, bytes, max_found, max_missed, max_runtime, min_runtime, max_byte_run, min_byte_run = parse_stdout(stdout)
    bytes_output.puts "#{num_tags} #{bytes}"
    missed_output.puts "#{num_tags} #{missed}"
+   epc_overhead_output.puts "#{num_tags} #{(num_tags.to_f * 8.0) / bytes.to_f}"
 end
 
 bytes_output.close
 missed_output.close
+epc_overhead_output.close

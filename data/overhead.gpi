@@ -1,0 +1,10 @@
+set terminal postscript enhanced color "Helvetica" 24
+#set key width -4
+#set size ratio 0.5
+#set key box
+set grid
+set xlabel "Number of tags" 0,0.35
+set ylabel "(tags*8) / total bytes sent" 1.1,0
+set output "mac_overhead.eps"
+
+plot "implicit_windows_mac.dat" using 1:2 t "implicit windows" with lines lw 8
