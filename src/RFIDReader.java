@@ -20,41 +20,10 @@ public class RFIDReader {
     private Set<String> epcValues; // List.contains() uses ==, not .equals...
     private RFIDChannel channel;
 
-    //frames used for the protocol
-    byte[] ack;
-    byte[] query;
-
     public RFIDReader(RFIDChannel chan) {
         currentInventory = new ArrayList<byte[]>();
         epcValues = new HashSet<String>();
         channel = chan;
-
-        //Create needed output frames that don't change.
-        //*Note: You may choose whether or not to use
-        //Output/Input streams in your implementation.
-        //They are offered here as one convenient option
-        //for encoding/decoding a byte array.
-        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-        DataOutputStream dataOut = new DataOutputStream(bytesOut);
-
-        try{
-            //create "ack" frame
-            dataOut.writeByte(RFIDConstants.ACK);
-            dataOut.flush();
-            ack = bytesOut.toByteArray();
-            bytesOut.reset();
-
-            //create "query" frame
-            dataOut.writeByte(RFIDConstants.QUERY);
-            dataOut.flush();
-            query = bytesOut.toByteArray();
-            bytesOut.reset();
-
-            dataOut.close();
-            bytesOut.close();
-        } catch (Exception e){
-            System.out.println("Error in creation of reader frames!");
-        }
     }
     
     public List<byte[]> inventory() {
@@ -66,82 +35,39 @@ public class RFIDReader {
 	    byte nextFlag = RFIDConstants.NEW_QUERY;
 
         while(count < STOPPING_CRITERIA) {
-	    if(windowChange && timeSinceLastWindowPacket > WINDOW_TRANS_SPACING)
-	    	response = sendQuery(window);
-	    else {
-	    	response = sendQuery(nextFlag);
-	    
-            if(response == null){
-            	count += window == 0 ? 1 : 0;
-		        windowChange = window != 0;
-                window = Math.max(window / 2 - 1, 0);
-		        nextFlag = RFIDConstants.DESPERATE_QUERY;
-            } else if(Arrays.equals(response, RFIDChannel.GARBLE)){
-                count = 0;
-		        windowChange = window != 255
-                window = Math.min(window * 2 + 1, 255);
-		        nextFlag = RFIDConstants.COLLISION_QUERY;
-            } else {
-                if(!currentInventory.contains(response))
-                    currentInventory.add(response);
-                count = 0;
-	        	windowChange = window != 0;
-	        	window = Math.max(window - 1, 0);
-	        	nextFlag = RFIDConstants.NEW_QUERY;
+	        if(windowChange && timeSinceLastWindowPacket > WINDOW_TRANS_SPACING)
+		        response = sendQuery(nextFlag, window);
+	        else {
+	        	response = sendQuery(nextFlag);
+	        
+                if(response == null){
+                	count += window == 0 ? 1 : 0;
+		            windowChange = window != 0;
+                    window = Math.max(window / 2 - 1, 0);
+		            nextFlag = RFIDConstants.DESPERATE_QUERY;
+                } else if(Arrays.equals(response, RFIDChannel.GARBLE)){
+                    count = 0;
+	            	windowChange = window != 255;
+                    window = Math.min(window * 2 + 1, 255);
+		            nextFlag = RFIDConstants.COLLISION_QUERY;
+                } else {
+                    if(!currentInventory.contains(response))
+                        currentInventory.add(response);
+                    count = 0;
+	            	windowChange = window != 0;
+	            	window = Math.max(window - 1, 0);
+	            	nextFlag = RFIDConstants.NEW_QUERY;
+                }
             }
-        }
 
-        return currentInventory;
-    }
-    
-    private void sendAck(){
-    	channel.sendMessage(ack);
+            return currentInventory;
     }
     
     private byte[] sendQuery(byte code){
-	return channel.sendMessage(new byte[]{code});
+	    return channel.sendMessage(new byte[]{code});
     }
 
-    private byte[] sendQuery(int window){
-    	return channel.sendMessage(new byte[]{RFIDConstants.WINDOW_QUERY, new RFIDWindow(window).toByte()});
-    }
-    
-    private void sendWindow(int window){
-    	channel.sendMessage(new byte[]{RFIDConstants.WINDOW, new RFIDWindow(window).toByte()});
-    }
-    
-    //This controls the behavoir of the Reader.
-    //The inventory method should run
-    //until the reader determines that it is unlikly
-    //any other tags are uninventored, then return
-    //the currentInventory.
-    public List<byte[]> strawManInventory() {
-        /*
-            Currently, the strawman protocol is implemented.
-            Replace with your own protocol.
-        */
-        int count = 0; //count of consecutive no-replies
-
-        byte[] response;
-
-        //Strawman protocol continues until
-        //32 consecutive no-replies.
-        while(count < 32) {
-            response = sendQuery();
-
-            if(response == null){
-                count++;
-            } else if(Arrays.equals(response, RFIDChannel.GARBLE)){
-                count = 0;
-            } else {
-                if(!currentInventory.contains(response)){
-                    currentInventory.add(response);
-                }               
-                sendAck();
-                count = 0;
-            }
-        }
-
-        return currentInventory;
+    private byte[] sendQuery(byte code, int window){
+    	return channel.sendMessage(new byte[]{code, new RFIDWindow(window).toByte()});
     }
 }
