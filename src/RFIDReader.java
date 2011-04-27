@@ -78,7 +78,7 @@ public class RFIDReader {
             } else if(Arrays.equals(response, RFIDChannel.GARBLE)){
                 count = 0;
 		windowChange = window != 255
-                window = Math.min(window + 1, 255);
+                window = Math.min(window * 2 + 1, 255);
 		nextFlag = RFIDConstants.COLLISION_QUERY;
             } else {
                 if(!currentInventory.contains(response))
