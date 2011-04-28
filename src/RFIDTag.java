@@ -20,7 +20,7 @@ public class RFIDTag {
     private boolean beenInventoried;
     private boolean previouslySentEPC;
 
-    private RFIDWindow window;
+    private int window;
 
     public RFIDTag() {
         //generate random unsigned 64 bit identifier for this Tag
@@ -29,7 +29,7 @@ public class RFIDTag {
 
         beenInventoried = false;
         previouslySentEPC = false;
-        window = new RFIDWindow(INITIAL_WINDOW);
+        window = INITIAL_WINDOW;
     }
 
     /*
@@ -50,7 +50,7 @@ public class RFIDTag {
         if(message == null)
             throw new AssertionError("Message should not be null!");
 
-        if(!Arrays.equals(message, RFIDChannel.GARBLE)){
+        if(!Arrays.equals(message, RFIDChannel.GARBLE)) {
             //unpack the message
             //see comment in RFIDReader concerning use of Streams
             ByteArrayInputStream bytesIn = new ByteArrayInputStream(message);
@@ -64,31 +64,42 @@ public class RFIDTag {
                 return null;
             }
 
-            if(flag == RFIDConstants.ACK){
+            switch(flag) {
+            case RFIDConstants.NEW_QUERY:
                 // someone was inventoried, so we know that we have one less
-                // tag to contend with XXX
-                //window = new RFIDWindow(Math.max(window.getWindow() - 1, 0));
+                // tag to contend with
+                window = Math.max(window - 1, 0);
                 
                 if(previouslySentEPC) {
                     //we've been inventoried, so don't respond anymore.
                     beenInventoried = true;
                 }
-            } else if(flag == RFIDConstants.QUERY && !beenInventoried){
-               //this is a query, update our window..
-                try {
-                    window = RFIDWindow.unpack(dataIn.readByte());
-                } catch (Exception e) {
-					//If the window hasn't changed, no need to send it again. 
-                    //The reader just sends the query flag, and we keep the
-                    //old window.
-                }
-                
-                //and roll the die to see if we reply
-                if(window.getWindow() == 0 || generator.nextInt(window.getWindow()) == 0){
-                    //success, send out our EPC to be inventoried
-                    previouslySentEPC = true;
-                    return tagEPC;
-                }
+
+                break;
+            case RFIDConstants.COLLISION_QUERY:
+                // There was a collision last round, so increase our window
+                // size
+                window = Math.min(window * 2 + 1, RFIDConstants.MAX_WINDOW);
+                break;
+            case RFIDConstants.DESPERATE_QUERY: 
+                // Nobody responded last period, so we halve our window size
+                window = Math.max(window / 2 - 1, 0);
+                break;
+            }
+
+            // if the Reader explicitly put in a window byte, we override the 
+            // decision we made earlier
+            // XXX Why isn't there a DataInputStream.hasNextByte()?
+            try {
+                window = RFIDWindow.unpack(dataIn.readByte()).getWindow();
+            } catch(Exception e) {}
+            
+
+            //and roll the die to see if we reply
+            if(!beenInventoried && (window == 0 || generator.nextInt(window) == 0)){
+               //success, send out our EPC to be inventoried
+               previouslySentEPC = true;
+               return tagEPC;
             }
         }
 

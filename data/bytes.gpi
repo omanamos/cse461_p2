@@ -7,4 +7,5 @@ set xlabel "Number of tags" 0,0.35
 set ylabel "Average bytes sent" 1.1,0
 set output "bytes.eps"
 
-plot "add_decrease_stop_15_bytes.dat" using 1:2 t "add_decrease_stop_15_bytes.dat" with lines lw 8, "add_decrease_stop_4_bytes.dat" using 1:2 t "add_decrease_stop_4_bytes.dat" with lines lw 8 ,  "mult_decrease_stop_15_bytes.dat" using 1:2 t "mult_decrease_stop_15_bytes.dat" with lines lw 8,  "mult_decrease_stop_4_bytes.dat" using 1:2 t "mult_decrease_stop_4_bytes.dat" with lines lw 8,  "mult_increase_mult_decrease_stop_15_bytes.dat" using 1:2 t "mult_increase_mult_decrease_stop_15_bytes.dat" with lines lw 8,   "mult_increase_mult_decrease_stop_4_bytes.dat" using 1:2 t "mult_increase_mult_decrease_stop_4_bytes.dat" with lines lw 8 
+plot "ours_bytes.dat" using 1:2 t "explicit windows" with lines lw 8, \
+"implicit_windows_bytes.dat" using 1:2 t "implicit windows" with lines lw 8,"strawman_bytes.dat" using 1:2 t "strawman" with lines lw 8 
