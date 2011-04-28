@@ -1,0 +1,52 @@
+2.a)
+	A selfish node that wants to use more of the channel than it is allowed could essentially flood the channel all the time with packets addressed to itself, meaning they would be ignored by other nodes. If the selfish node wants to send an actual packet it can do that in place of a packet to itself, which is guaranteed to get through as long as all nodes are within range of the selfish node. 
+	
+	This takes advantage of the CSMA part of both protocols. In particular, since no node will start sending while the channel is busy, and the selfish nodes makes sure that the channel is always busy, no other node will be able to start sending unless if violates CSMA or is not in range of the selfish node.
+	
+	In the case that a node that wishes to send is not within range of the selfish node, and therefore is not violating CSMA when it starts sending, it will still end up never sending anything over the channel, since there is guaranteed to always be a collision. In the hidden node case, the selfish node would still eventually monopolize bandwidth, since it uses binary exponential backoff to delay retries after collisions.
+	
+	This selfish protocol would result in the selfish node getting essentially all of the available bandwidth, except in the case of the hidden node. In that case however, most of the bandwidth would still be captured, since binary exponential backoff would prevent any hidden node from causing too many collisions.
+	
+2.b)
+	i.) Building a selfish node for the consumer would be a reltively difficult/impossible task. The selfish layer protocol would have to be implemented in the link layer, which is usually done on the NIC card. The NIC would have to be reprogrammed, which is not something a consumer could do easily without in depth knowledge of how the NIC card was configured.
+	ii.) As a manufacturer of NICs, it would be relatively easy to implement this selfish protocol. Instead of loading the normal, fair protocol onto the NIC, the selfish protocol could be loaded on instead.
+	
+2.c)
+	If there were two selfish nodes in the network, no data would ever get through, since there would be constant collisions, and no one would ever get any data through, since both nodes are constantly sending data.
+	
+3.a) MAC addr of A & B = X
+	For the cases where a packet is going to A or going to B, there is no guarantee as to which one it will actually be sent to. If the bridges were using backward learning it would be sent to the node that last sent a packet through the bridge, or both if the bridge doesn't know anything about A and B's MAC address. For example, if A sends a packet to C, the network would think update the location of X to be at A; however, if B sends a packet to C afterwards, the location of X would be updated to be at node B.
+	
+	In the case of A sending to B (MAC addr = X) where the bridge thinks X is actually at A, the frame would be discarded, since it would look like a looping frame from a prior flood. This also holds for the case where B is trying to send to A (MAC addr = X) but the bridge thinks that X is at B.
+	
+3.b)
+	It doesn't really change my answer from part a.
+	
+=======================================
+Textbook problems
+=======================================
+4.16)
+		base case:
+			p(contention will end on round 0) = 0 -> p(contention didn't end on round 1) = 1
+		recursive defn:
+			p(contention will end on round k) = p(contention didn't end on round k - 1) * (2^k) - 1 / (2^k)
+			
+			
+4.40)
+	A bridge may not be present in a spanning tree if there are no end nodes attached to it. For example, it could be a bridge without any computers connected to it. If the bridge was also not an integral part of the network (ie it is a branch and isn't an important/best link to the root of the network), then it wouldn't be included in the spanning tree of the network.
+
+5.6)
+	C's routing table
+	
+	+---------------+-------+-------+-------+-------+-------+-------+
+	|Destination	|	A	|	B	|	C	|	D	|	E	|	F	|
+	+---------------+-------+-------+-------+-------+-------+-------+
+	|Outgoing line	|	B	|	B	|	E	|	D	|	E	|	B	|
+	+---------------+-------+-------+-------+-------+-------+-------+
+	|Cost			|	11	|	6	|	8	|	3	|	5	|	8	|
+	+---------------+-------+-------+-------+-------+-------+-------+
+	
+	
+5.12)
+	
+	
