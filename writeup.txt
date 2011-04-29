@@ -20,7 +20,7 @@
 	In the case of A sending to B (MAC addr = X) where the bridge thinks X is actually at A, the frame would be discarded, since it would look like a looping frame from a prior flood. This also holds for the case where B is trying to send to A (MAC addr = X) but the bridge thinks that X is at B.
 	
 3.b)
-	It doesn't really change my answer from part a.
+	If there was a more complicated network, there would still be no guarantee that a message would get to A or B; however, the more complex network could perform much worse than the three node network in part a. This is because the ambiguity between A and B can create many different packet loops in the network, which could cause packets to get stuck in the network and waste bandwidth.
 	
 =======================================
 Textbook problems
@@ -31,10 +31,16 @@ Textbook problems
 		recursive defn:
 			p(contention will end on round k) = p(contention didn't end on round k - 1) * (2^k) - 1 / (2^k)
 			
-			
+		P(cotention will end on round x) = (2 * 1 / 2 ^ x) * (1 - (1 / 2 ^ x)) ^ (2 - 1)
+										 = (1 / (2 ^ (x - 1))) * (1 - (1 / 2 ^ x))
+										 
+		P is maximized when 1 / 2 ^ x = 1 / k where x is the round number and k is 2 (the number of stations).
+		This equation is maximized when x = 1   ->   1 / 2 ^ 2 = 1 / 2   ->   1 / 2 = 1 / 2
+
 4.40)
 	A bridge may not be present in a spanning tree if there are no end nodes attached to it. For example, it could be a bridge without any computers connected to it. If the bridge was also not an integral part of the network (ie it is a branch and isn't an important/best link to the root of the network), then it wouldn't be included in the spanning tree of the network.
-
+	
+	
 5.6)
 	C's routing table
 	
@@ -46,7 +52,7 @@ Textbook problems
 	|Cost			|	11	|	6	|	8	|	3	|	5	|	8	|
 	+---------------+-------+-------+-------+-------+-------+-------+
 	
-	
+		
 5.12)
 	
 	
